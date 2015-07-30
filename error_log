@@ -1,0 +1,10 @@
+[18-May-2013 07:24:19] PHP Fatal error:  Call to private method UberGallery::_createThumbnail() from context 'Retailers' in /home/crayons/public_html/sos/application/controllers/retailers.php on line 201
+[18-May-2013 07:56:53] PHP Parse error:  syntax error, unexpected T_VARIABLE in /home/crayons/public_html/sos/application/views/retailers/upload_photos.php on line 104
+[18-May-2013 07:58:38] PHP Parse error:  syntax error, unexpected T_VARIABLE in /home/crayons/public_html/sos/application/views/retailers/upload_photos.php on line 104
+[18-May-2013 07:59:18] PHP Fatal error:  Call to undefined function  expload() in /home/crayons/public_html/sos/application/views/retailers/upload_photos.php on line 89
+[18-May-2013 08:00:54] PHP Fatal error:  Call to undefined function  expload() in /home/crayons/public_html/sos/application/views/retailers/upload_photos.php on line 101
+[25-Jun-2015 19:58:54 America/Chicago] PHP Fatal error:  Call to a member function children() on a non-object in /home2/skj/public_html/all/brightree_patient_app/application/libraries/address_verify.php on line 61
+[13-Jul-2015 00:43:28 America/Chicago] PHP Fatal error:  Call to a member function children() on a non-object in /home2/skj/public_html/all/brightree_patient_app/application/libraries/address_verify.php on line 393
+[13-Jul-2015 05:26:57 America/Chicago] PHP Fatal error:  Call to a member function children() on a non-object in /home2/skj/public_html/all/brightree_patient_app/application/libraries/address_verify.php on line 408
+[15-Jul-2015 07:03:46 America/Chicago] PHP Fatal error:  Call to a member function children() on a non-object in /home2/skj/public_html/all/brightree_patient_app/application/libraries/address_verify.php on line 216
+[15-Jul-2015 07:09:51 America/Chicago] PHP Fatal error:  Call to a member function children() on a non-object in /home2/skj/public_html/all/brightree_patient_app/application/libraries/address_verify.php on line 217

@@ -1,0 +1,113 @@
+/*
+	Stylesheet for Tigra Calendar v5.0
+	Product is Public Domain (Free for any kind of applicaiton, customization and derivative works are allowed) 
+	URL: http://www.softcomplex.com/products/tigra_calendar/
+
+	- all image paths are relative to path of stylesheet
+	- the styles below can be moved into the document or in existing stylesheet
+
+*/
+
+/* input box in default state */ 
+input.tcalInput {
+	background:#fff url(img/cal.gif) 94% center no-repeat !important;
+	padding-right: 20px;
+	cursor: pointer;
+}
+
+/* additional properties for input boxe in activated state, above still applies unless in conflict */
+input.tcalActive {
+	background:#fff url('img/no_cal.gif') 94% center no-repeat !important;
+}
+/* container of calendar's pop-up */
+#tcal {
+	position: absolute;
+	visibility: hidden ;
+	display:block !important;
+	z-index: 100;
+	width: 218px;
+	background-color: white;
+	margin:2px auto 0;
+	padding: 0;
+	border: 1px solid #70685b;
+	left:38% !important;
+	background:url(img/date-heading.jpg) 0 0 repeat-x ;
+}
+/* table containing navigation and current month */
+#tcalControls {
+	border-collapse: collapse;
+	border: 0;
+	width: 100%;
+	background:url("../images/backgrounds/navItemBg.png") repeat-x scroll 0 center transparent;
+}
+#tcalControls tr { border:none; }
+#tcalControls td {
+	border-collapse: collapse;
+	border: 0;
+	padding: 0;
+	background-repeat: no-repeat;
+	cursor: pointer;
+}
+#tcalControls th {
+	border-collapse: collapse;
+	border: 0;
+	padding: 0;
+	color:#fff;
+	line-height: 25px;
+	font-size: 12px;
+	text-align: center;
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: normal;
+	white-space: nowrap;
+	background:none;
+}
+#tcalPrevYear { background: url(img/arrow-prev.png) right 50% no-repeat ;width:16px; }
+#tcalPrevMonth { background: url(img/arrow-prev.png) right 50% no-repeat ; width:16px; }
+#tcalNextMonth {  background: url(img/arrow-next.png) 0 50% no-repeat ; width:30px; }
+#tcalNextYear {  background: url(img/arrow-next.png) 0 50% no-repeat;  width:16px;}
+.month-name{width:74px;}
+.year-name{width:40px;}
+
+/* table containing week days header and calendar grid */
+#tcalGrid {
+	border-collapse: collapse;
+	border: 1px solid silver;
+	width: 100%;
+	background:#F4F4F4;	
+}
+#tcalGrid th {
+	background: #EFEFEF;
+    border: 0 solid silver;
+    border-collapse: collapse;
+    color: #6A6359;
+    font-family: arial;
+    font-size: 10px;
+    padding: 0px 0;
+    text-align: center;
+	height:18px;
+	width:30px;
+	border-top:1px solid #c0c0c0;
+}
+#tcalGrid td {
+	border:1px solid #827f76;
+	border-bottom:0px solid red;
+	border-right:0px solid red;
+	border-collapse: collapse;
+	padding:0px;
+	text-align: center;
+	font-family: Tahoma, Geneva, sans-serif;
+	width: 30px;
+	height:26px;
+	font-size: 11px;
+	cursor: pointer;
+	color:#6c6a5e;
+}
+#tcalGrid td:first-child{border-left:0px solid red;}		
+#tcalGrid td.tcalOtherMonth { color: silver; }
+#tcalGrid td.tcalWeekend {  }
+#tcalGrid td.tcalToday {}
+#tcalGrid td.tcalSelected { background: url(../images/backgrounds/navItemBg.png) repeat-x scroll 0 center transparent; color:rgb(46,125,191); }	
+	.itemActions { position: relative; }
+ .itemActions aside#cal_cal { position: absolute; left:101%; top:-3px;}
+.tcal_pay aside#cal_cal{position: absolute; top:-3px; left:31%;}
+ 
