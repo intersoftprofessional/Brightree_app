@@ -111,10 +111,11 @@
 						<h5>Sales Order Module</h5>
 					</div>
 					
-					<!-- Notification messages -->
-					<div class="nNote nSuccess hideit" <?php if(!isset($msg)) echo "style='display:none;'"; ?> id="note_note">
+					<!-- Notification messages hideit-->
+					<div class="nNote nSuccess" <?php if(!isset($msg)) echo "style='display:none;'"; ?> id="note_note">
 							<p><strong>MESSAGE: </strong><span id="msg_msg"><?php if(isset($msg)) echo $msg; ?></span></p>
 					</div>
+<div id="processing" class="nNote" style="display:none;"><img src="<?php echo base_url(); ?>theme/sos/images/processing_dots.gif"/></div>
 					<!--<div class="add-news-btn">
 						<div class="fr"><input type="button" value="Generate email" class="greyishBtn" onclick="loadPopupBox(<?php echo $live_list_id; ?>);" /></div>
 					</div>-->
@@ -158,7 +159,7 @@
 					</div>					
 					<div class="table">
 						<div class="head"><h5 class="iFrames">Verify & Update Sales Order's Delivery Address Requests</h5></div>
-						<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
+						<table cellpadding="0" cellspacing="0" border="0" class="display" id="dataexample">
 							<thead>
 								<tr>
 									<!--<th width="15%">Retailer member number</th>-->									
@@ -238,6 +239,25 @@
                     $("#date1").datepicker("option", "maxDate", dt);
                 }
             });
+			oTable = $('#dataexample').dataTable({
+				"bJQueryUI": false,
+				"bAutoWidth": false,
+				"aaSorting": [
+                [0, "desc"]
+            ],
+				"sPaginationType": "full_numbers",
+				"sDom": '<"datatable-header"fl>t<"datatable-footer"ip>',
+				"oLanguage": {
+					"sLengthMenu": "<span>Show entries:</span> _MENU_",
+					"oPaginate": { "sFirst": "First", "sLast": "Last", "sNext": ">", "sPrevious": "<" }
+				}
+			});
+			if(document.getElementById('dataexample'))
+				oTable.fnLengthChange( 100 );
+			});
         });
+        function show_processing(){
+            $('#processing').show('slow');
+        }
     </script>
 </html>

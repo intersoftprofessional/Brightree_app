@@ -44,9 +44,8 @@ class Isp_Address_Verify {
         //$this->patientOBJ = new BrighttreePatientService("https://webservices.brightree.net/v0100-1302/OrderEntryService/PatientService.svc", "apiuser@GenevaWoodsSBX", "gw2015!!");
         //$this->SalesOrderOBJ = new BrighttreeSalesOrderService("https://webservices.brightree.net/v0100-1501/OrderEntryService/SalesOrderService.svc", "apiuser@GenevaWoodsSBX", "gw2015!!");
 
-		$this->patientOBJ = new BrighttreePatientService("https://webservices.brightree.net/v0100-1302/OrderEntryService/PatientService.svc", "shaeva@chspharmapitest", "coffee4u");
-        $this->SalesOrderOBJ = new BrighttreeSalesOrderService("https://webservices.brightree.net/v0100-1501/OrderEntryService/SalesOrderService.svc", "shaeva@chspharmapitest", "coffee4u");
-
+		$this->patientOBJ = new BrighttreePatientService("https://webservices.brightree.net/v0100-1302/OrderEntryService/PatientService.svc", API_USERNAME, API_PASSWORD);
+        $this->SalesOrderOBJ = new BrighttreeSalesOrderService("https://webservices.brightree.net/v0100-1501/OrderEntryService/SalesOrderService.svc", API_USERNAME, API_PASSWORD);		
     }
 
     // --------------------------------------------------------------------
@@ -61,7 +60,7 @@ class Isp_Address_Verify {
     public function patients_address_verify($params = array()) {
         
         //$result = $this->patientOBJ->PatientSearch('2015-05-19T05:25:16', '2015-05-19T05:25:17');
-        $result = $this->patientOBJ->PatientSearch($params['start_date'], $params['end_date']);
+        $result = $this->patientOBJ->PatientSearch($params['start_date'], $params['end_date'],'',$params['records_per_page'],$params['page']);
 		$this->ISP->load->model('Dashboard_Model');
 		
 		//exit;
@@ -74,6 +73,9 @@ class Isp_Address_Verify {
 		$returnresponse['total_patients'] = 0;
 		$returnresponse['patients_updated'] = 0;
 		$returnresponse['patients_not_updated'] = 0;
+		$returnresponse['total_patients_exist'] = $totalRecords;
+		$returnresponse['records_per_page'] = $params['records_per_page'];
+		$returnresponse['page'] = $params['page'];
         
 		//traverse to all records
         if($records && (count($records) > 0)) {            
@@ -273,7 +275,7 @@ class Isp_Address_Verify {
      */
     public function sales_order_address_verify($params = array()) {		
 		
-		$result = $this->SalesOrderOBJ->SalesOrderSearch($params['start_date'], $params['end_date']);
+		$result = $this->SalesOrderOBJ->SalesOrderSearch($params['start_date'], $params['end_date'],'',$params['records_per_page'],$params['page']);
 
 		//load modal
 		$this->ISP->load->model('Dashboard_Model');
@@ -286,6 +288,9 @@ class Isp_Address_Verify {
 		$returnresponse['total_sales_orders'] = 0;
 		$returnresponse['sales_orders_updated'] = 0;
 		$returnresponse['sales_orders_not_updated'] = 0;
+		$returnresponse['total_sales_orders_exist'] = $totalRecords;
+		$returnresponse['records_per_page'] = $params['records_per_page'];
+		$returnresponse['page'] = $params['page'];
 		
 		
 		if($records && ( count($records) > 0)) {
@@ -477,4 +482,95 @@ class Isp_Address_Verify {
 		}
 		return $returnresponse;
 	}
+	
+	
+	
+	/*Function to get Ready To Shipment Sales Order's data*/
+	 public function fetch_sales_order_ready_for_shipping($params = array()) {
+		$result = $this->SalesOrderOBJ->SalesOrderSearch($params['start_date'], $params['end_date'],'',$params['records_per_page'],$params['page'],$params['WIPUserTaskReason']);
+		
+		//load modal
+		$this->ISP->load->model('Dashboard_Model');
+		
+		$xml = simplexml_load_string((string) $result);
+
+		$totalRecords = $xml->children('s',true)->children()->SalesOrderSearchResponse->children()->SalesOrderSearchResult->children('a',true)->TotalItemCount;
+		$records =$xml->children('s',true)->children()->SalesOrderSearchResponse->children()->SalesOrderSearchResult->children('a',true)->Items->children('b',true)->SalesOrderSearchResponse;
+
+		$returnresponse['total_sales_orders_exist'] = $totalRecords;		
+		$count=1;
+		
+		if($records && ( count($records) > 0)) {			
+						
+			foreach($records as $key => $record)
+			{				
+				$BrightreeID = (string) $record->children('b',true)->BrightreeID;
+				$return_array= array();
+				
+				//Get object of patient from brightree 
+				$sales_order = $this->SalesOrderOBJ->SalesOrderFetchByBrightreeID($BrightreeID);
+				$sales_order_string = $sales_order;
+				$xml = simplexml_load_string((string) $sales_order);
+
+				$sales_order =$xml->children('s',true)->children()->SalesOrderFetchByBrightreeIDResponse->children()->SalesOrderFetchByBrightreeIDResult
+						->children('a',true)->Items->children('b',true)->SalesOrder;
+				$WIPInfo =$sales_order->children('b',true)->SalesOrderWIPInfo;		
+						
+				$return_array[$count]['WIPAssignedToKey'] = (string) $WIPInfo->children('b',true)->WIPAssignedToKey; 
+				$return_array[$count]['WIPAssignedToPerson'] = (string) $WIPInfo->children('b',true)->WIPAssignedToPerson; 
+				$WIPClosedDate = (string) $WIPInfo->children('b',true)->WIPClosedDate; 
+				$WIPCompleted = (bool) $WIPInfo->children('b',true)->WIPCompleted; 
+				$WIPCreateDate = (string) $WIPInfo->children('b',true)->WIPCreateDate; 
+				$return_array[$count]['WIPDaysInState'] = (string) $WIPInfo->children('b',true)->WIPDaysInState; 
+				$WIPNeedDate = (string) $WIPInfo->children('b',true)->WIPNeedDate; 
+				$return_array[$count]['WIPStateKey'] = (string) $WIPInfo->children('b',true)->WIPStateKey; 
+				$return_array[$count]['WIPStateName'] = (string) $WIPInfo->children('b',true)->WIPStateName;
+				
+				if($WIPInfo->children('b',true)->WIPNeedDate) {
+					$date = new DateTime((string) $WIPInfo->children('b',true)->WIPNeedDate);
+					$return_array[$count]['WIPNeedDate'] = $date->format('Y-m-d');
+				}else {
+					$return_array[$count]['WIPNeedDate'] = '';
+				}	
+				
+				if($WIPInfo->children('b',true)->WIPCreateDate) {
+					$date = new DateTime((string) $WIPInfo->children('b',true)->WIPCreateDate);
+					$return_array[$count]['WIPCreateDate'] = $date->format('Y-m-d');
+				}else {
+					$return_array[$count]['WIPCreateDate'] = '';
+				}
+				
+				if($WIPInfo->children('b',true)->WIPClosedDate) {
+					$date = new DateTime((string) $WIPInfo->children('b',true)->WIPClosedDate);
+					$return_array[$count]['WIPClosedDate'] = $date->format('Y-m-d');
+				}else {
+					$return_array[$count]['WIPClosedDate'] = '';
+				}
+
+				$WIPCompleted= (string) $WIPInfo->children('b',true)->WIPCompleted;				
+				$return_array[$count]['WIPCompleted'] = ($WIPCompleted == 'false') ? '0':'1';
+				
+				$return_array[$count]['sales_order_id'] = $BrightreeID;
+				$return_array[$count]['facility_id']= (string) $sales_order->children('b',true)->DeliveryInfo->children('b',true)->Facility->children('c',true)->ID;
+				$return_array[$count]['facility']= (string) $sales_order->children('b',true)->DeliveryInfo->children('b',true)->Facility->children('c',true)->Value;
+				
+				
+				$return_array[$count]['patient_id']= (string) $sales_order->children('b',true)->SalesOrderClinicalInfo->children('b',true)->Patient->children('b',true)->BrightreeID;
+				$patient_name_first= (string) $sales_order->children('b',true)->SalesOrderClinicalInfo->children('b',true)->Patient->children('b',true)->Name->children('c',true)->First;
+				$patient_name_last= (string) $sales_order->children('b',true)->SalesOrderClinicalInfo->children('b',true)->Patient->children('b',true)->Name->children('c',true)->Last;
+				$patient_name_middle= (string) $sales_order->children('b',true)->SalesOrderClinicalInfo->children('b',true)->Patient->children('b',true)->Name->children('c',true)->Middle;
+				
+				$patient_name=($patient_name_first) ? trim($patient_name_first) : '';
+				$patient_name .=($patient_name_middle) ? ' '.trim($patient_name_middle) : '';
+				$patient_name .=($patient_name_last) ? ' '.trim($patient_name_last) : '';
+				
+				$return_array[$count]['patient_name'] = trim($patient_name); 
+				
+				$count++;
+				
+			}
+		}
+		return $return_array;
+	}
+	
 }

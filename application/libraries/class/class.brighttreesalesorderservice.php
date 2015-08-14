@@ -54,21 +54,37 @@ Class BrighttreeSalesOrderService {
 	** function to search patient on basis of createdatetime
 	*/
 	
-	function SalesOrderSearch($CreateDateTimeStart,$CreateDateTimeEnd,$sortRequest='',$pageSize=1000,$page=1)
+	function SalesOrderSearch($CreateDateTimeStart='',$CreateDateTimeEnd='',$sortRequest='',$pageSize=1000,$page=1,$WIPUserTaskReason='')
 	{
 		$SOAPAction="http://www.brightree.com/external/SalesOrderService/ISalesOrderService/SalesOrderSearch";
 		$specific_post_string='<sal:SalesOrderSearch xmlns="http://www.brightree.com/external/SalesOrderService">
-									<sal:SearchParams>																	
-											<brig:CreateDateTimeEnd>'.$CreateDateTimeEnd.'</brig:CreateDateTimeEnd>
-											<brig:CreateDateTimeStart>'.$CreateDateTimeStart.'</brig:CreateDateTimeStart>											
-										</sal:SearchParams>
-										<sal:SortParams>'.$sortRequest.'</sal:SortParams>
-										<sal:pageSize>'.$pageSize.'</sal:pageSize>
-										<sal:page>'.$page.'</sal:page>
+									<sal:SearchParams>'.
+										(($CreateDateTimeEnd) ? '<brig:CreateDateTimeEnd>'.$CreateDateTimeEnd.'</brig:CreateDateTimeEnd>' : '').
+										(($CreateDateTimeStart) ? '<brig:CreateDateTimeStart>'.$CreateDateTimeStart.'</brig:CreateDateTimeStart>' : '').
+										(($WIPUserTaskReason) ? '<brig:WIPUserTaskReason><brig1:ID>'.$WIPUserTaskReason.'</brig1:ID>
+</brig:WIPUserTaskReason>' : '').
+									'</sal:SearchParams>
+									<sal:SortParams>'.$sortRequest.'</sal:SortParams>
+									<sal:pageSize>'.$pageSize.'</sal:pageSize>
+									<sal:page>'.$page.'</sal:page>
                                 </sal:SalesOrderSearch>';
 		$xml_post_string=sprintf($this->xml_post_string,$specific_post_string);		
 		return $this->getResults($SOAPAction,$xml_post_string);		
 	}
+	
+	/**
+	** function to search sales order ready for shipping
+	*/
+	
+	function SalesOrderFetchReadyforShipping()
+	{
+		$SOAPAction="http://www.brightree.com/external/SalesOrderService/ISalesOrderService/SalesOrderFetchReadyforShipping";
+		$specific_post_string='<sal:SalesOrderFetchReadyforShipping xmlns="http://www.brightree.com/external/SalesOrderService">																	
+                                </sal:SalesOrderFetchReadyforShipping>';
+		$xml_post_string=sprintf($this->xml_post_string,$specific_post_string);		
+		return $this->getResults($SOAPAction,$xml_post_string);		
+	}
+	
 	
 	/*
 	** Function to call cURL	

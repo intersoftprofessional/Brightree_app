@@ -15,7 +15,7 @@
 |
 */
 //$config['base_url']	= 'http://'.$_SERVER['HTTP_HOST'].'/all/brightree_patient_app/';
-$config['base_url']	= 'http://'.$_SERVER['HTTP_HOST'].'/projects/BrightreeAPP/';
+$config['base_url']	= 'http://'.$_SERVER['HTTP_HOST'].'/projects/brightree_app/';
 
 /*
 |--------------------------------------------------------------------------

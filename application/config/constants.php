@@ -37,5 +37,11 @@ define('FOPEN_WRITE_CREATE_STRICT',				'xb');
 define('FOPEN_READ_WRITE_CREATE_STRICT',		'x+b');
 
 
+/* Define API Credentials*/
+define('API_USERNAME','apiuser@CHSPharm');
+define('API_PASSWORD','rtgi2015!');
+define('TOTAL_ADDRESSES_PROCESSED_PER_REQUEST',80);
+define('WIPUserTaskReason',174);  //Ready For Shipping WIP Status of sales order
+
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */

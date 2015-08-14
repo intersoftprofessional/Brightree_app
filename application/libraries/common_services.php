@@ -37,7 +37,7 @@ class Common_Services {
         
 		//get instance
 		$this->ISP =& get_instance();
-		$this->OBJ = new CommonWebService("https://webservices.brightree.net/v0100-1501/ReferenceDataService/ReferenceDataService.svc","shaeva@chspharmapitest","coffee4u");
+		$this->OBJ = new CommonWebService("https://webservices.brightree.net/v0100-1501/ReferenceDataService/ReferenceDataService.svc",API_USERNAME,API_PASSWORD);
         
     }
 	

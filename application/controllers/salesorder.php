@@ -1,5 +1,4 @@
 <?php
-
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
 
@@ -25,6 +24,7 @@ class SalesOrder extends Isp_Controller {
 	var $list_affected_sales_orders_by_api = 'salesorder/list_affected_sales_orders_by_api';
     //var $order_view = 'offers/order_view';
     var $model_name = 'SalesOrder_Model';
+	var $salesorder_per_page = TOTAL_ADDRESSES_PROCESSED_PER_REQUEST;	
 
     //var $edit_view = 'offers/edit_view';
 
@@ -37,7 +37,8 @@ class SalesOrder extends Isp_Controller {
         // Your own constructor code
     }
 
-    public function verify_sales_order_address($id = '', $msg = '', $redirect = 'true') {
+    public function verify_sales_order_address($page = 1, $msg = '', $redirect = 'true') {
+
         if ($this->session->userdata('user_level') == '1') {		
 			
 			if($msg == 'deleted')
@@ -47,39 +48,110 @@ class SalesOrder extends Isp_Controller {
 			$table_name = 'api_sales_order_update_call_lists';            
             $this->data['beans'] = $this->get_data_from_table($table_name, 'ID' , 'DESC');		
 			
+			//unset session if page 1 is called again without processing all steps
+			if((! $page) || empty($page) || $page == 1) {
+				$this->session->unset_userdata('SOCreateDateTimeStart');
+				$this->session->unset_userdata('SOCreateDateTimeEnd');
+				$this->session->unset_userdata('total_sales_order_processed');
+			}
 
-            if ((!isset($_POST['CreateDateTimeStart'])) && (!isset($_POST['CreateDateTimeEnd'])))
-                $this->load->view($this->verify_sales_order_address, $this->data);
-            else if (empty($_POST['CreateDateTimeStart']) || empty($_POST['CreateDateTimeEnd'])) {
+			//show view if no data is set
+			if ((!isset($_POST['CreateDateTimeStart'])) && (!$this->session->userdata('SOCreateDateTimeStart'))) {
+				$this->load->view($this->verify_sales_order_address, $this->data);
+				return;
+			}
+
+
+			
+			//set values
+			$data['CreateDateTimeStart'] = (isset($_POST['CreateDateTimeStart'])) ? $_POST['CreateDateTimeStart'] : $this->session->userdata('SOCreateDateTimeStart');
+			$data['CreateDateTimeEnd'] = (isset($_POST['CreateDateTimeEnd'])) ? $_POST['CreateDateTimeEnd'] : $this->session->userdata('SOCreateDateTimeEnd');       
+                
+            if (empty($data['CreateDateTimeStart']) || empty($data['CreateDateTimeEnd'])) {
                 $this->data['msg'] = "Both Dates are required";
                 $this->load->view($this->verify_sales_order_address, $this->data);
             } else {
-               echo  $this->load->library('Address_Verify');
-               
-                $result = $this->address_verify->sales_order_address_verify(array(
-                    'start_date' => $_POST['CreateDateTimeStart'],
-                    'end_date' => $_POST['CreateDateTimeEnd']
-                ));
 				
-				//save sales order api call lists
-				$sales_order_api_call_list_id = $this->save_sales_order_api_call_lists($result,$_POST['CreateDateTimeStart'],$_POST['CreateDateTimeEnd']);
-				
-				//save affected sales order api call lists
-				if($sales_order_api_call_list_id) {
-					if($result['total_sales_orders']) {
-						$this->save_affected_sales_order_lists($sales_order_api_call_list_id, $result['sales_orders']);
-						$this->data['msg'] = "Total Sales Order Found: ".$result['total_sales_orders'].", Total sales order's delivery address updated : ".$result['sales_orders_updated']."</br><a target='_blank' href='".site_url('salesorder/list_affected_sales_orders_by_api/'.$sales_order_api_call_list_id)."'>Click To view Results</a>";
-					}
-					else {
-						$this->data['msg'] = "No Sales Order Found";
-					}
-					$this->data['beans'] = $this->get_data_from_table($table_name, 'ID' , 'DESC');					
-					$this->load->view($this->verify_sales_order_address, $this->data);
-				}								
+               	$this->proceed_to_verify_address($data,$page);							
             }
         } else
             echo "You have no permission to access this page.";
     }
+	
+	
+	function proceed_to_verify_address($data,$page){
+		$table_name = 'api_sales_order_update_call_lists'; 
+		$total_sales_order_processed=0;
+		//load library
+		$this->load->library('Address_Verify');
+               
+		$result = $this->address_verify->sales_order_address_verify(array(
+			'start_date' => $data['CreateDateTimeStart'],
+			'end_date' => $data['CreateDateTimeEnd'],
+			'records_per_page' => $this->salesorder_per_page,
+			'page' => $page
+		));
+		
+		//save sales order api call lists
+		$sales_order_api_call_list_id = $this->save_sales_order_api_call_lists($result,$data['CreateDateTimeStart'],$data['CreateDateTimeEnd']);
+		
+		//save affected sales order api call lists
+		if($sales_order_api_call_list_id) {
+			if($result['total_sales_orders']) {
+				//update affected sales orders
+				$this->save_affected_sales_order_lists($sales_order_api_call_list_id, $result['sales_orders']);
+				
+				//check if more then maximum record limit records exist in the request
+				if($result['total_sales_orders'] < $result['total_sales_orders_exist']) {
+					
+					$record_processed_from= (intval($result['page']) * $this->salesorder_per_page) -  $this->salesorder_per_page + 1; 
+					$record_processed_to= $record_processed_from + intval($result['total_sales_orders']) - 1;
+					
+					$this->data['msg'] = "Total sales order exist in your request: "
+								.$result['total_sales_orders_exist']
+								."<br> Records Processed: "
+								.$record_processed_from.' TO '.$record_processed_to
+								.". Total Sales Order Found: "
+								.$result['total_sales_orders']
+								.", Total sales order's delivery address updated : "
+								.$result['sales_orders_updated'];								
+					
+					$total_sales_order_processed = ($this->session->userdata('total_sales_order_processed') ? intval($this->session->userdata('total_sales_order_processed')) + $result['total_sales_orders'] : $result['total_sales_orders']);
+					$remaning_records = intval($result['total_sales_orders_exist']) - $total_sales_order_processed;
+					$next_records = ($remaning_records < $this->salesorder_per_page) ? $remaning_records : $this->salesorder_per_page;
+					
+					$this->data['msg'].="</br></br>Total ".$total_sales_order_processed." Sales Orders have been processed out of ".$result['total_sales_orders_exist'];
+					
+					//check if it is a last page
+					if($result['page'] != ceil((floatval($result['total_sales_orders_exist']) / $this->salesorder_per_page))){
+						//not last page
+						$nextpage=$result['page'] + 1;						
+						$this->data['msg'].="</br><a onClick='show_processing();' href='".site_url('salesorder/verify_sales_order_address/'.$nextpage)."'>Click To Verify Next ".$next_records." Sales Orders</a>";								
+						$this->session->set_userdata('SOCreateDateTimeStart', $data['CreateDateTimeStart']); 
+						$this->session->set_userdata('SOCreateDateTimeEnd', $data['CreateDateTimeEnd']);
+						$this->session->set_userdata('total_sales_order_processed', $total_sales_order_processed);
+						
+					}else{
+						//yes last page
+						$this->session->unset_userdata('SOCreateDateTimeStart');
+						$this->session->unset_userdata('SOCreateDateTimeEnd');
+						$this->session->unset_userdata('total_sales_order_processed');
+					}
+					
+					
+				}else {												
+					$this->data['msg'] = "Total Sales Order Found: ".$result['total_sales_orders'].", Total sales order's delivery address updated : ".$result['sales_orders_updated']."</br><a target='_blank' href='".site_url('salesorder/list_affected_sales_orders_by_api/'.$sales_order_api_call_list_id)."'>Click To view Results</a>";					
+				}	
+			}
+			else {
+				$this->data['msg'] = "No Sales Order Found";
+			}
+			$this->data['beans'] = $this->get_data_from_table($table_name, 'ID' , 'DESC');					
+			$this->load->view($this->verify_sales_order_address, $this->data);
+		} else {
+			die('Not Saved In Database');
+		}
+	}
 
 	function save_sales_order_api_call_lists($data = array(),$startdate = '',$enddate='')  {
 		$table_name = 'api_sales_order_update_call_lists';
@@ -318,279 +390,6 @@ class SalesOrder extends Isp_Controller {
             $this->{$this->model_name}->__update_order($array, $list_id);
         }
         echo "<p><strong>SUCCESS: </strong><span>The offer order have been updated.</span></p>";
-    }
-
-    function generate_email() {
-        $form_ret['user_level'] = '0';
-        $get_all_retailer_list = $this->{$this->model_name}->__select_table($form_ret, 'sos_retailers', 'business_name');
-        $all_retailer = $get_all_retailer_list->result_array();
-
-        $form_data['status'] = '1';
-        $form_data['list_id'] = $_POST['list_id'];
-        $get_live_list_offers = $this->{$this->model_name}->__select_table($form_data, 'offers', 'order');
-        $all_offers = $get_live_list_offers->result_array();
-        if (!empty($all_offers)) {
-            $offers = array();
-            foreach ($all_offers as $offer) {
-                $offers[$offer['list_id']][$offer['retailer_id']] = $offer;
-            }
-        }
-        if (isset($all_retailer)) {
-            $offer = array();
-            foreach ($all_retailer as $retailer) {
-                if ($offers[$_POST['list_id']][$retailer['retailer_id']]['offer'] != '') {
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['id'] = $retailer['retailer_id'];
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['number'] = $retailer['retailer_member_number'];
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['slug'] = $retailer['slug_business_name'];
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['image'] = $retailer['main_profile_image'];
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['name'] = $retailer['business_name'];
-                    $offer[$offers[$_POST['list_id']][$retailer['retailer_id']]['order']]['offer'] = $offers[$_POST['list_id']][$retailer['retailer_id']]['offer'];
-                }
-            }
-        }
-        ksort($offer);
-        $save_pdth = 'http://' . $_SERVER['HTTP_HOST'] . '/test/img/offer_thumb/87x65';
-        $base_url = 'http://' . $_SERVER['HTTP_HOST'];
-        //print_r($offer); exit;
-        $html = '';
-        $html .= '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Sold on Stourport - November offers</title>
-</head>
-<style type="text/css">
-	@media screen and (-webkit-min-device-pixel-ratio:0) {
-body { width:100% !important;  }
-}
-</style>
-<body style="margin:0;padding:0;width:600px; -moz-text-size-adjust:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%">
-
-
-<table width="100%" border="0" cellspacing="0" cellpadding="0" align="center" class="blue-box" style="margin:0 auto !important; max-width:600px !important ; width:100%;">
-    <tr>
-        <td width="100%">
-           
-            <table cellpadding="0" cellspacing="0" border="0" width="100%" >
-       
-            	<tr>
-                	<td align="left" valign="top" width="50%" bgcolor="#1e3ea4" height="206">
-                    <table width="80%" bgcolor="#1e3ea4" border="0" cellspacing="0" cellpadding="0"height="206" >
-                <tr>
-                    <td align="left" valign="top" style="padding-top:20px; padding-left:10px;"><span style="color:#fff; font-size:20px; line-height:20px; font-family:Arial, Helvetica, sans-serif; ">25 Fantastic Offers for November</span></td>
-                </tr>
-                <tr>
-                	<td align="left" valign="top"  style="color:#ffffff;font-family:Arial, sans-serif;font-size:14px;line-height:22px; padding-top:12px; padding-left:10px;">
-                        As well as lots of great new offers we also have new retailers joining the scheme. If you\'re thinking of starting your Chrismas shopping early then why not grab your Sold on Stourport card and <span style="font-weight:bold">stay local and save</span> this November?</td>
-                </tr>
-                <tr>
-                	
-                    	 <td align="left" valign="bottom" width="346">
-                    		<img  src="' . $base_url . '/images/offer/blue-left-bot.jpg" width="346" height="16" alt="" style="display:block; float:left; border:1px solid red vertical-align:top;" />
-                    </td>
-                    
-                </tr>
-            </table>
-         
-                    </td>
-                    <td align="left" valign="top" width="254">
-                    		<img  src="' . $base_url . '/images/offer/blue-right.jpg" width="254" height="206" alt="" style="display:block; float:left; border:1px solid red vertical-align:top;" />
-                    </td>
-                </tr>
-                 
-            </table>
-        </td>
-    </tr>
-   
-    <tr>
-        <td width="100%" height="30">&nbsp;</td>
-    </tr>
-</table>
-
-
-
-
-<!-- OFFER 1 START -->';
-        if (!empty($offer)) {
-            $i = 1;
-            foreach ($offer as $offer1) {
-                if ($i <= 4) {
-                    $html .= '<table width="600" border="0" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto; max-width:600px; width:100%;">
-    <tr>
-            <td align="left" valign="middle" width="15%">
-            	<img src="';
-                    if ($offer1['image'] != '')
-                        $html .= $save_pdth . '/' . $offer1['image'];
-                    else
-                        $html .= $save_pdth . '/default.jpg';
-                    $html .= '" alt="Stourport-Photo-Centre"  style="  -moz-box-sizing: border-box; border: 1px solid #CCCCCC;  border-radius: 5px; max-width:87px;" width="87" height="65" />
-            </td>
-           <td align="left" valign="top" width="5%">&nbsp;</td>
-            <td align="left" valign="top" width="55%" >
-            	<h2 style="font-family:Arial, Helvetica, sans-serif ; font-size:18px; line-height:20px; color:#E64578;">' . $offer1['name'] . '</h2>
-                <p style="font-size:16px; color:#1D3876; line-height:18px; font-family:Arial, Helvetica, sans-serif;">' . $offer1['offer'] . '</p>
-            </td>
-               <td align="left" valign="top" width="5%">&nbsp;</td>
-              <td align="left" valign="middle"><a href="' . $base_url . '/retailer/' . $offer1['number'] . '/' . $offer1['slug'] . '.html">
-              	<img src="http://soldonstourport.co.uk/img/email_thumbs/view-page.png" alt="Stourport-Photo-Centre"  style="border:none;max-width:56px;" width="53" height="35" />
-              </a></td>
-    </tr>
-    <tr>
-        <td width="100%" height="41" colspan="5"><img src="http://www.soldonstourport.co.uk/images/separator.png" width="600" height="41" alt="" style="display:block; width:100%; max-width:600px;" /></td>
-    </tr>
-</table>';
-                }
-                if ($i == 4) {
-                    $html .= '<table width="600" border="0" cellspacing="0" cellpadding="0" align="center" class="pink-box" style="margin:0 auto; max-width:600px; width:100%;">
-    <tr>
-        <td width="29%" class="nodisplay" valign="top"><img  src="' . $base_url . '/images/offer/pink-left.jpg" width="233" height="198" alt="" style="display:block; vertical-align:top;" /></td>
-        <td width="70%" valign="top" align="left">
-            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-            <tr>
-            	<td width="100%" class="nodisplay" valign="top" align="left"><img  src="' . $base_url . '/images/offer/pink-rght-top.jpg" width="367" height="17" alt="" style="display:block; vertical-align:top;" /></td>
-            </tr>
-                <tr>
-                    <td width="100%" align="left" bgcolor="#e881a6" style="color:#ffffff;font-family:Arial, sans-serif;font-size:22px;font-weight:bold"><img  src="http://www.soldonstourport.co.uk/images/mp.png" width="333" height="29" alt="£100&nbsp;Monthly&nbsp;Prize&nbsp;Draw!" style="display:block" /></td>
-                </tr>
-            </table>
-            <table width="100%" border="0" cellspacing="0" cellpadding="0"  bgcolor="#e881a6">
-                <tr>
-                	<td colspan="2" height="66" bgcolor="#e881a6">
-                    	<table width="100%" border="0" cellspacing="0" cellpadding="0" >
-	
-        	<tr>
-                    
-                    <td width="100%" align="right" style="color:#ffffff;font-family:Arial, sans-serif;font-size:14px;line-height:18px">Win £100 in vouchers to spend at participating retailers.</td>
-                </tr>
-                <tr>
-                    <td width="100%" colspan="2" align="right" style="color:#ffffff;font-family:Arial, sans-serif;font-size:14px;line-height:18px">If you\'re a winner please contact Severn Stitches, Lombard St.</td>
-                </tr>
-                <tr>
-                    <td width="100%" height="10" colspan="2" style="font-size:1px;line-height:1px">&nbsp;</td>
-                </tr>
-     
-</table>
-                    </td>
-                </tr>
-                <tr>
-                    <td width="100%" height="24" colspan="2" align="right" style="color:#ffffff;font-family:Arial, sans-serif;font-size:16px;font-weight:bold"><img src="' . $base_url . '/images/offer/wcn-november-2013-.png" width="367" height="24" alt="November\'s winning card number: 1219" style="display:block" /></td>
-                </tr>
-                    <tr>
-                    <td width="100%" class="nodisplay"  valign="top" align="left"><img  src="' . $base_url . '/images/offer/pink-rght-bot.jpg" width="367" height="62" alt="" style="display:block; vertical-align:top;" /></td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    
-</table>';
-                }
-                if ($i > 4) {
-                    $html .= '<table width="600" border="0" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto; max-width:600px; width:100%;">
-    <tr>
-            <td align="left" valign="middle" width="15%">
-            	<img src="';
-                    if ($offer1['image'] != '')
-                        $html .= $save_pdth . '/' . $offer1['image'];
-                    else
-                        $html .= $save_pdth . '/default.jpg';
-                    $html .= '" alt="Stourport-Photo-Centre"  style="  -moz-box-sizing: border-box; border: 1px solid #CCCCCC;  border-radius: 5px; max-width:87px;" width="87" height="65" />
-            </td>
-           <td align="left" valign="top" width="5%">&nbsp;</td>
-            <td align="left" valign="top" width="55%" >
-            	<h2 style="font-family:Arial, Helvetica, sans-serif ; font-size:18px; line-height:20px; color:#E64578;">' . $offer1['name'] . '</h2>
-                <p style="font-size:16px; color:#1D3876; line-height:18px; font-family:Arial, Helvetica, sans-serif;">' . $offer1['offer'] . '</p>
-            </td>
-               <td align="left" valign="top" width="5%">&nbsp;</td>
-              <td align="left" valign="middle"><a href="' . $base_url . '/retailer/' . $offer1['number'] . '/' . $offer1['slug'] . '.html">
-              	<img src="http://soldonstourport.co.uk/img/email_thumbs/view-page.png" alt="Stourport-Photo-Centre"  style="border:none;max-width:56px;" width="53" height="35" />
-              </a></td>
-    </tr>
-    <tr>
-        <td width="100%" height="41" colspan="5"><img src="http://www.soldonstourport.co.uk/images/separator.png" width="600" height="41" alt="" style="display:block; width:100%; max-width:600px;" /></td>
-    </tr>
-</table>';
-                }
-                $i++;
-            }
-        }
-        $html .= '<table width="600" border="0" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto; max-width:600px; width:100%;">
-    <tr>
-        <td width="100%" height="45" align="center" valign="top" style="color:#d23c68;font-family:Arial, sans-serif;font-size:22px;font-weight:bold"><img src="http://www.soldonstourport.co.uk/images/rules.png" width="323" height="25" alt="Rules&nbsp;of&nbsp;the&nbsp;Scheme" style="display:block; width:323px;" /></td>
-    </tr>
-    <tr>
-        <td width="100%">
-            <table width="98%" border="0" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto">
-                <tr>
-                    <td width="10%" valign="top" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">1.</td>
-                    <td width="90%" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">
-                        Only one membership card may be held by any individual. In the event of more<br style="line-height:18px" />
-                        than one card being held, eligibility to the prize draw is forfeited for all those cards.
-                    </td>
-                </tr>
-                <tr>
-                    <td width="100%" height="5" colspan="2" style="font-size:1px;line-height:1px">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td width="10%" valign="top" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">2.</td>
-                    <td width="90%" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">
-                        In the event of loss of the membership card, a replacement card will be issued<br style="line-height:18px" />
-                        and the lost card will be cancelled.
-                    </td>
-                </tr>
-                <tr>
-                    <td width="100%" height="5" colspan="2" style="font-size:1px;line-height:1px">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td width="10%" valign="top" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">3.</td>
-                    <td width="90%" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">
-                        Winners of the prize draw may spend their £100 at up to five different Supporting<br style="line-height:18px" />
-                        Retailers. Winners must make their claim within the month that their number is<br style="line-height:18px" />
-                        drawn, and must spend their winnings withi n three months of their claim.
-                    </td>
-                </tr>
-                <tr>
-                    <td width="100%" height="5" colspan="2" style="font-size:1px;line-height:1px">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td width="10%" valign="top" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">4.</td>
-                    <td width="90%" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">
-                        In the event that a member wishes to come out of the scheme, they will write to<br style="line-height:18px" />
-                        The Administrators, Stourport Town Centre Forum at PO Box 2725, Stourport-on-<br style="line-height:18px" />
-                        Severn, DY13 8QN and their details will be removed.
-                    </td>
-                </tr>
-                <tr>
-                    <td width="100%" height="5" colspan="2" style="font-size:1px;line-height:1px">&nbsp;</td>
-                </tr>
-                <tr>
-                    <td width="10%" valign="top" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">5.</td>
-                    <td width="90%" style="color:#21488f;font-family:Arial, sans-serif;font-size:14px;line-height:18px">Should there be any dispute, the decision of The Administrators will be final.</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td width="100%"  align="center" valign="bottom"><img src="http://www.soldonstourport.co.uk/images/sos.jpg" width="466" height="360" alt="" style="display:block; max-width:466px; width:100%" /></td>
-    </tr>
-    <tr>
-        <td width="100%"  align="center" valign="top" style="font-family:Arial, sans-serif;font-size:14px;font-weight:bold"><a href="http://www.crayonjuice.co.uk" target="_blank" style="color:#f79422;text-decoration:none"><img src="http://www.soldonstourport.co.uk/images/cjlogo.png" width="136" height="27" alt="crayonjuice" style="display:block;border:none; max-width:136px;" /></a></td>
-    </tr>
-    <tr>
-        <td width="100%" align="center" style="color:#979797;font-family:Arial, sans-serif;font-size:11px;line-height:14px; text-align:center !important">
-            Crayon Juice is providing all design, illustration, branding, printing<br style="line-height:14px" />
-            and web development services for Sold on Stourport.<br style="line-height:14px" />
-            24 Lombard Street, Stourport-on-Severn, DY13 8DT - <a href="http://www.crayonjuice.co.uk" target="_blank" style="color:#979797;text-decoration:none;line-height:14px">www.crayonjuice.co.uk</a>
-        </td>
-    </tr>
-    <tr>
-        <td width="100%" height="20">&nbsp;</td>
-    </tr>
-</table>
-
-</body>
-</html>
-';
-        echo htmlentities($html);
     }
 
 }
