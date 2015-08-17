@@ -46,8 +46,8 @@ class Patientidentificationlabels extends Isp_Controller {
 	
     public function fetch_sales_order_ready_for_shipping($id = '', $msg = '', $redirect = 'true') {
 		//load library
-		$this->load->library('Address_Verify');
-		$result = $this->address_verify->fetch_sales_order_ready_for_shipping(array(
+		$this->load->library('Salesorders_With_Custom_Fields');		
+		$result = $this->salesorders_with_custom_fields->fetch_sales_order_ready_for_shipping(array(
 			'start_date' => '',
 			'end_date' => '',
 			'records_per_page' => 1000,

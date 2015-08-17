@@ -42,6 +42,8 @@ define('API_USERNAME','apiuser@CHSPharm');
 define('API_PASSWORD','rtgi2015!');
 define('TOTAL_ADDRESSES_PROCESSED_PER_REQUEST',80);
 define('WIPUserTaskReason',174);  //Ready For Shipping WIP Status of sales order
+define('FieldStorageNumber_For_Customfield_Order_Labels_Required',8);  // FieldStorageNumber of Custom-field Order Labels Required
+
 
 /* End of file constants.php */
 /* Location: ./application/config/constants.php */
