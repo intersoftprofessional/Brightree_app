@@ -197,8 +197,8 @@ class Dashboard extends Isp_Controller {
 		
 		$form_data['api_call_id']= $patient_api_call_list_id;
 		if($patients && (count($patients) > 0)) {			
-			foreach($patients as $patientID => $patient) {
-				$form_data['patient_id']=$patientID;				
+			foreach($patients as $patientBID => $patient) {
+				$form_data['patient_brightree_id']=$patientBID;				
 				$form_data['address_updated']= (isset($patient['address_update']) && $patient['address_update']) ? '1' : '0';
 				$form_data['failure_message']= (isset($patient['failure_message'])) ? $patient['failure_message'] : '';
 				$form_data['old_address']= ((! empty($patient['old_addr']['AddressLine1'])) ? trim($patient['old_addr']['AddressLine1']).', ' : '').
@@ -216,7 +216,8 @@ class Dashboard extends Isp_Controller {
 										   ((! empty($patient['new_addr']['State'])) ? trim($patient['new_addr']['State']) : '');	
 
 				$form_data['patients_first_name']=trim($patient['first_name']);
-				$form_data['patients_last_name']=trim($patient['last_name']);				
+				$form_data['patients_last_name']=trim($patient['last_name']);
+				$form_data['patient_id']=trim($patient['patient_id']);				
 				$this->{$this->model_name}->__insert_table($form_data,$table_name);
 			}
 		}

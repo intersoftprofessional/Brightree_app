@@ -73,45 +73,6 @@ function DisableEnable(id)
 
 <body onload="charcount();">
 
-
-<div id="main-photo-gallery" style="display:none;">
-    <a class="popupBoxClose" href="javascript:void(0);" onclick="unloadPopupBox();">x</a>
-    <div class="nNote nSuccess hideit" style='display:none;' id="note_note1">
-            <p><strong>SUCCESS: </strong><span id="msg_msg1"></span></p>
-    </div>
-    <div id="main-photo-gallery-div">
-        <div><h5 id="subtitle">Upload main profile photo</h5></div>
-        <div class="rowElem">
-            <input type="hidden" value="profile_img" id="page" />
-            <div id="dropArea"></div>
-            <div class="info">
-                <div>Files left: <span id="count">0</span></div>
-                <h2>Result:</h2>
-                <div id="result"></div>
-                <canvas width="500" height="20" id="progress-bar"></canvas>
-            </div>
-        </div>
-
-        <!-- Gallery -->
-        <?php
-            if(isset($bean['main_profile_image']) && $bean['main_profile_image'] != '')
-            {
-                $path_img = explode('/', $bean['main_profile_image']);
-                $main_image = $path_img[count($path_img)-1];
-            }
-        ?>
-        <div><h5 id="subtitle-gallery">Main profile photo gallery</h5></div>
-        <div class="pics">
-            <form method="post" action="<?php echo site_url('retailers/save_main_photo'); ?>" name="photo_upload">
-                <input type="hidden" value="<?php if(isset($bean['retailer_id'])) echo $bean['retailer_id']; ?>" name="retailer_user_id" />
-                <div id="galleryListWrapper">
-
-                </div>
-            </form>
-        </div>
-
-    </div>
-</div>
 <div id="container">
 <!-- Top navigation bar -->
 <div id="topNav">
@@ -137,39 +98,45 @@ function DisableEnable(id)
     <div class="content" id="page_title">
         <!--<div class="sample-video"><a href="http://www.soldonstourport.co.uk/vids/retailers/retailers.swf" rel="shadowbox;width=1200;height=760"><img src="<?php //echo base_url(); ?>theme/sos/images/watch-this.png" /></a></div>-->
         <div class="clear"></div>
-    	<div class="title"><h5>Users</h5></div>
+    	<div class="title"><h5>Sales Order Labels</h5></div>
         <!-- Notification messages -->
         <div class="nNote nSuccess hideit" <?php if(!isset($msg)) echo "style='display:none;'"; ?> id="note_note">
                 <p><strong>SUCCESS: </strong><span id="msg_msg"><?php if(isset($msg)) echo $msg; ?></span></p>
-        </div>       
-		<a class="btnIconLeft" href="<?php echo site_url('taxzones/fetch_latest_taxzones'); ?>" style="position: relative; top: 20px;">
-			<img class="icon" alt="" src="<?php echo base_url(); ?>/theme/sos/images/refresh.png">
-			<span>Click to fetch latest taxzones from Brightree</span>
+        </div>
+		<a class="btnIconLeft" href="<?php echo site_url('patientidentificationlabels/addnewlabel/'.$sales_order_table_id); ?>" onclick="return confirm_add_new(this)" style="position: relative; top: 20px;">
+			<img class="icon" alt="" src="<?php echo base_url(); ?>theme/sos/images/expand.gif">
+			<span>Click to add new label to sales order</span>
 		</a>
         <!-- Dynamic table -->
         <div class="table">
-            <div class="head"><h5 class="iFrames">Taxzones</h5></div>
+            <div class="head"><h5 class="iFrames">Labels</h5></div>
             <table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
                 <thead>
                     <tr>
                         <!--<th width="15%">Retailer member number</th>-->
-                        <th width="3%">Sr. No.</th>	
-						<th width="20%">TaxZone Name</th>
-						<th width="20%">TaxZone ID</th>
-						<th width="20%">County</th>
-						<th width="5%">Edit</th>
+                        <th width="20%">Sr. No.</th>							
+						<th width="20%">Sales Order</th>
+						<th width="20%">Barcode</th>
+						<th width="20%">Operation</th>
+						<th width="20%"></th>
                     </tr>
                 </thead>
                 <tbody>
-                <?php $li = 1; foreach($taxZones as $val) { ?>
+                <?php $li = 1; foreach($labels as $val) { ?>
                     <tr class="gradeA">
                         <!--<td><?php //echo $bean['retailer_member_number']; ?></td>-->
-                        <td><?php echo $li; ?></td>
-                        <td><?php echo $val->taxzone_name; ?></td>
-                        <td><?php echo $val->taxzone_ID; ?></td>
-                        <td><?php echo $val->county; ?></td>
-                        <td><?php echo '<a href="taxzones/edit_taxzone/'.$val->ID.'">Edit</a>';?></td>
-
+                        <td class="center"><?php echo $li; ?></td>
+                        <td class="center"><?php echo $sales_order_brightree_id; ?></td>
+						<td class="center"><?php echo $val->barcode; ?></td>
+						<td class="center">
+							<div class="num">
+								<input type="hidden" value="<?php echo site_url('patientidentificationlabels/delete_label/'.$val->ID.'/'.$sales_order_table_id); ?>" id="link_del_<?php echo $li; ?>"/>
+								<a href="javascript:void(0);" title="Delete" onclick="return close_btn1(<?php echo $li; ?>);" class="greenNum">
+									<img alt="" src="<?php echo base_url(); ?>theme/sos/images/icons/dark/close.png" />
+								</a>
+							</div>
+						</td>
+						<td></td>
                     </tr>
                 <?php $li++; } ?>
                 </tbody>
@@ -185,6 +152,42 @@ function DisableEnable(id)
     </div>
 </div>
 </div>
+<script src="<?php echo base_url(); ?>theme/sos/messi/messi.js"></script>
+<script type="text/javascript">		
+		function close_btn1(id)
+		{
+			var msg = 'This will permanently delete this record. Are you sure?';
+			new Messi(msg, {title: 'Alert', buttons: [{id: 0, label: 'Yes', val: 'Y'}, {id: 1, label: 'No', val: 'N'}], callback: function(val) {
+			if(val == 'N')
+			{
+				return false;
+			}
+			else
+			{
+				var link = document.getElementById('link_del_'+id).value;
+				window.location = link;
+			}
+			}});
+			return false;
+		}
+		
+		function confirm_add_new(element)
+		{
+			var msg = 'Do you really want to add a new label ?';
+			var result;
+			new Messi(msg, {title: 'Alert', buttons: [{id: 0, label: 'Yes', val: 'Y'}, {id: 1, label: 'No', val: 'N'}], callback: function(val) {
+			if(val == 'N')
+			{
+				result=false;
+			}
+			else
+			{
+				window.location = element.getAttribute('href');
+			}
+			}});
+			return false;
+		}
+</script>
 <script src="<?php echo base_url(); ?>theme/sos/upload_script/js/script.js"></script>
 </body>
 </html>

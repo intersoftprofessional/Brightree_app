@@ -41,8 +41,9 @@ define('FOPEN_READ_WRITE_CREATE_STRICT',		'x+b');
 define('API_USERNAME','apiuser@CHSPharm');
 define('API_PASSWORD','rtgi2015!');
 define('TOTAL_ADDRESSES_PROCESSED_PER_REQUEST',80);
-define('WIPUserTaskReason',174);  //Ready For Shipping WIP Status of sales order
+define('WIPUserTaskReasonSerializeArray', serialize(array(113,171,173,174)));  //Ready For Shipping WIP Status of sales order
 define('FieldStorageNumber_For_Customfield_Order_Labels_Required',8);  // FieldStorageNumber of Custom-field Order Labels Required
+define('Default_Value_Of_Customfield_Order_Labels_Required',3);  // FieldStorageNumber of Custom-field Order Labels Required
 
 
 /* End of file constants.php */

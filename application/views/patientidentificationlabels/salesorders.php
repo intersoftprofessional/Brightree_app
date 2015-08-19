@@ -103,8 +103,8 @@ function DisableEnable(id)
         <div class="nNote nSuccess hideit" <?php if(!isset($msg)) echo "style='display:none;'"; ?> id="note_note">
                 <p><strong>SUCCESS: </strong><span id="msg_msg"><?php if(isset($msg)) echo $msg; ?></span></p>
         </div>
-		<a href="<?php echo site_url('patientidentificationlabels/fetch_sales_order_ready_for_shipping'); ?>" style="position: relative; top: 20px;">
-			<img alt="" src="<?php echo base_url(); ?>/theme/sos/images/refresh.png">
+		<a class="btnIconLeft" href="<?php echo site_url('patientidentificationlabels/fetch_sales_order_ready_for_shipping'); ?>" style="position: relative; top: 20px;">
+			<img class="icon" alt="" src="<?php echo base_url(); ?>/theme/sos/images/refresh.png">
 			<span>Click to fetch latest sales orders from Brightree those are ready for shipping</span>
 		</a>
         <!-- Dynamic table -->
@@ -137,7 +137,10 @@ function DisableEnable(id)
                         <td><?php echo $val->WIPNeedDate; ?></td>
                         <td><?php echo $val->facility; ?></td>
 						<td><?php echo $val->WIPStateName; ?></td>
-                        <td><?php //echo '<a href="taxzones/edit_taxzone/'.$val->ID.'">Edit</a>';?></td>
+                        <td><?php 
+						echo '<a class="btnIconLeft" href="#"><img class="icon" src="'.base_url().'theme/sos/images/printer.png" alt="print"><span style="min-width:56px">Print</span></a>';
+						echo '<a class="btnIconLeft" href="'.site_url("patientidentificationlabels/labels/$val->ID").'"><img class="icon" src="'.base_url().'theme/sos/images/icon_boards.gif" alt="print"><span style="min-width:56px; top-margin:5px;">FullFill</span></a>';
+						?></td>
 
                     </tr>
                 <?php $li++; } ?>

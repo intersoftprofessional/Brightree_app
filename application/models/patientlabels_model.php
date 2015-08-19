@@ -117,18 +117,21 @@ class Patientlabels_Model extends Isp_Model
 			$i=0;
 			foreach($result as $res)
 			{
-				$sales_order_id = $res['sales_order_id'];				
-				
+				$sales_order_id = $res['sales_order_id'];
 				$isExist = $this->isSalesorderExist($sales_order_id);
 				if($isExist==true)
 				{
 					$this->db->where('sales_order_id', $sales_order_id);
+					
+					//do not update field 'labels_required'
+					//unset($res['labels_required']);
 					$this->db->update('sales_order_wipinfo', $res); 
 					$u++; 
 				}
 				else
 				{					
-					$this->db->insert('sales_order_wipinfo', $res); 
+					$this->db->insert('sales_order_wipinfo', $res);
+					$this->insertLabelsOfSalesOrder($res['labels_required'],$this->db->insert_id());
 					$i++;
 				}
 			}
@@ -136,6 +139,32 @@ class Patientlabels_Model extends Isp_Model
 			$return['updated']=$u;
 			return $return;
 		}
+	}
+	
+	public function insertLabelsOfSalesOrder($row,$salesorder_id)
+	{
+		if($row) {
+				for($i=1;$i<=$row;$i++) {
+					$barcode =  mt_rand(1000000000, 9999999999);
+					while($this->isLabelExist($barcode)) {
+						$barcode = mt_rand(1000000000, 9999999999);
+					}
+					$res['barcode'] = $barcode;
+					$res['salesordertable_id'] = $salesorder_id;
+					$this->db->insert('sales_order_labels', $res);
+				}
+			return true;
+		}		
+		return false;			
+	}
+	
+	function isLabelExist($barcode){
+		$query = $this->db->get_where('sales_order_labels', array('barcode' => $barcode));
+		if ($query->num_rows() > 0)
+		{
+			return true;
+		} 
+		return false;		
 	}
 	
 	function isSalesorderExist($sales_order_id)
@@ -155,6 +184,18 @@ class Patientlabels_Model extends Isp_Model
 		if($id!='')
 		{
 			$this->db->where('ID', $id);
+		}
+		$qry = $this->db->get()->result();
+		return $qry;
+	}
+	
+	function getLabels($salesorder_id='')
+	{        
+		$this->db->select('*');
+		$this->db->from('sales_order_labels');
+		if($salesorder_id!='')
+		{
+			$this->db->where('salesordertable_id', $salesorder_id);
 		}
 		$qry = $this->db->get()->result();
 		return $qry;

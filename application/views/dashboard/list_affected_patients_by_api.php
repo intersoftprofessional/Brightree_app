@@ -113,20 +113,21 @@
 					<!--<div class="add-news-btn">
 						<div class="fr"><input type="button" value="Generate email" class="greyishBtn" onclick="loadPopupBox(<?php echo $live_list_id; ?>);" /></div>
 					</div>-->	
-					<a style="position: relative; top: 20px;" href="<?php echo site_url('dashboard/verify_patient_address'); ?>"><img alt="" src="<?php echo base_url(); ?>/theme/sos/images/back_arrow.jpg"><span>Back to Patient Address Requests list</span></a>
+					<a class="btnIconLeft" style="position: relative; top: 20px;" href="<?php echo site_url('dashboard/verify_patient_address'); ?>"><img class="icon" alt="" src="<?php echo base_url(); ?>/theme/sos/images/back_arrow.jpg"><span>Back to Patient Address Requests list</span></a>
 					<div class="table">
 						<div class="head"><h5 class="iFrames">Effected Patients List</h5></div>
 						<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">
 							<thead>
 								<tr>
 									<!--<th width="15%">Retailer member number</th>-->									
+									<th width="10%">Patient Id</th>
 									<th width="10%">Patient's Brightree Id</th>
 									<th width="8%">Patient's First Name</th>
 									<th width="8%">Patient's Last Name</th>
 									<th width="5%">Address Updated</th>
 									<th width="25%">Previous Address</th>
 									<th width="25%">Updated Address</th>
-									<th width="14%">Failure Message</th>
+									<th width="10%">Failure Message</th>
 									<th width="25%">Operations</th>
 								</tr>
 							</thead>
@@ -135,6 +136,7 @@
 								<tr class="gradeA">
 									<!--<td><?php //echo $bean['retailer_member_number']; ?></td>-->									
 									<td><?php echo $bean['patient_id']; ?></td>
+									<td><?php echo $bean['patient_brightree_id']; ?></td>
 									<td><?php echo $bean['patients_first_name']; ?></td>
 									<td><?php echo $bean['patients_last_name']; ?></td>
 									<td><?php echo ($bean['address_updated']) ? 'Yes' : 'No'; ?></td>

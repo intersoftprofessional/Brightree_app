@@ -435,7 +435,7 @@ box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset;
 	background: linear-gradient(top, #fafafa 0%, #efefef 100%);
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fafafa', endColorstr='#efefef',GradientType=0 );
 }
-.btnIconLeft:hover { background: #f6f6f6; color: #B55D5C; }
+.btnIconLeft:hover { background: #f6f6f6; color: #000; }
 .btnIconLeft:active { background: #f1f1f1; }
 .btnIconLeft .icon { float: left; border-right: 1px solid #d5d5d5; padding: 8px; }
 .btnIconLeft span { display: block; float: left; padding: 5px 10px; font-weight: bold; }

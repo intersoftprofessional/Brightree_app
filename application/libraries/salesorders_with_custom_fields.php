@@ -26,6 +26,7 @@ class Salesorders_With_Custom_Fields {
 
     var $cfs;
 	var $SalesOrderOBJ;
+	var $default_Order_Labels_Required = Default_Value_Of_Customfield_Order_Labels_Required;
 
     /**
      * Constructor
@@ -59,13 +60,13 @@ class Salesorders_With_Custom_Fields {
 
 		$returnresponse['total_sales_orders_exist'] = $totalRecords;		
 		$count=1;
+		$return_array= array();
 		
 		if($records && ( count($records) > 0)) {			
 						
 			foreach($records as $key => $record)
-			{				
-				$BrightreeID = (string) $record->children('b',true)->BrightreeID;
-				$return_array= array();
+			{		
+				$BrightreeID = (string) $record->children('b',true)->BrightreeID;				
 				
 				//Get object of patient from brightree 
 				$sales_order = $this->SalesOrderOBJ->SalesOrderFetchByBrightreeID($BrightreeID);
@@ -144,7 +145,7 @@ class Salesorders_With_Custom_Fields {
 		$result = $this->cfs->CustomFieldValueFetchAllByBrightreeID($params['category'],$params['brightreeID']);		
 		$xml = simplexml_load_string((string) $result);
 		$customfields =$xml->children('s',true)->children()->CustomFieldValueFetchAllByBrightreeIDResponse->children()->CustomFieldValueFetchAllByBrightreeIDResult->children('a',true)->Items->children('b',true)->CustomFieldValue;
-		$value= '';
+		$value=$this->default_Order_Labels_Required;
 		if(count($customfields) > 0) {
 		
 			foreach($customfields as $customfield) {

@@ -113,7 +113,7 @@
 					<!--<div class="add-news-btn">
 						<div class="fr"><input type="button" value="Generate email" class="greyishBtn" onclick="loadPopupBox(<?php echo $live_list_id; ?>);" /></div>
 					</div>-->	
-					<a style="position: relative; top: 20px;" href="<?php echo site_url('salesorder/verify_sales_order_address'); ?>"><img alt="" src="<?php echo base_url(); ?>/theme/sos/images/back_arrow.jpg"><span>Back to Sales Order Address Requests list</span></a>
+					<a class="btnIconLeft" style="position: relative; top: 20px;" href="<?php echo site_url('salesorder/verify_sales_order_address'); ?>"><img class="icon" alt="" src="<?php echo base_url(); ?>/theme/sos/images/back_arrow.jpg"><span>Back to Sales Order Address Requests list</span></a>
 					<div class="table">
 						<div class="head"><h5 class="iFrames">Effected Sales Orders List</h5></div>
 						<table cellpadding="0" cellspacing="0" border="0" class="display" id="example">

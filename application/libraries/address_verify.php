@@ -152,6 +152,7 @@ class Isp_Address_Verify {
 				$returnresponse['patients'][$BrightreeID]['old_addr']['City'] = (string) $old_delivery_address_obj->City;
 				$returnresponse['patients'][$BrightreeID]['old_addr']['PostalCode'] = (string) $old_delivery_address_obj->PostalCode;
 				$returnresponse['patients'][$BrightreeID]['old_addr']['State'] = (string) $old_delivery_address_obj->State;
+				$returnresponse['patients'][$BrightreeID]['patient_id'] = (string) $patient->children('b', true)->PatientGeneralInfo->children('b', true)->PtID;
 
                 if ($verify->isSuccess()) {
 					$returnresponse['patients'][$BrightreeID]['address_verify'] = true;                    
