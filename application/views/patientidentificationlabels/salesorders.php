@@ -116,12 +116,13 @@ function DisableEnable(id)
                         <!--<th width="15%">Retailer member number</th>-->
                         <th width="2%">Sr. No.</th>	
 						<th width="10%">Sales Order ID</th>
-						<th width="12%">Patient Name</th>
-						<th width="12%">WIP Assigned To Person</th>
+						<th width="10%">Patient Name</th>
+						<th width="10%">WIP Assigned To Person</th>
 						<th width="10%">WIP Days In State</th>
-						<th width="12%">WIP Need Date</th>
-						<th width="12%">Facility</th>
-						<th width="12%">WIP Status</th>
+						<th width="10%">WIP Need Date</th>
+						<th width="10%">Facility</th>
+						<th width="10%">WIP Status</th>
+						<th width="10%">Shipped</th>
 						<th width="10%">Operations</th>
                     </tr>
                 </thead>
@@ -137,9 +138,11 @@ function DisableEnable(id)
                         <td><?php echo $val->WIPNeedDate; ?></td>
                         <td><?php echo $val->facility; ?></td>
 						<td><?php echo $val->WIPStateName; ?></td>
-                        <td><?php 
-						echo '<a class="btnIconLeft" href="#"><img class="icon" src="'.base_url().'theme/sos/images/printer.png" alt="print"><span style="min-width:56px">Print</span></a>';
-						echo '<a class="btnIconLeft" href="'.site_url("patientidentificationlabels/labels/$val->ID").'"><img class="icon" src="'.base_url().'theme/sos/images/icon_boards.gif" alt="print"><span style="min-width:56px; top-margin:5px;">FullFill</span></a>';
+						<td><?php echo ($val->shipped == 1) ? 'Shipped' : '' ; ?></td>
+                        <td><input type="hidden" value="<?php echo site_url("patientidentificationlabels/delete_salesorder/$val->ID"); ?>" id="link_del_<?php echo $li; ?>"/><?php 
+						echo '<a class="btnIconLeft" href="#"><img class="icon" src="'.base_url().'theme/sos/images/printer.png" alt="print"><span style="min-width:55px">Print</span></a>';
+						echo '<a class="btnIconLeft" href="'.site_url("patientidentificationlabels/labels/$val->ID").'"><img class="icon" src="'.base_url().'theme/sos/images/icon_boards.gif" alt="print"><span style="min-width:55px;">FullFill</span></a>';
+						echo '<a class="btnIconLeft" href="javascript:void(0);" onclick="return close_btn1('.$li.');"><img class="icon" src="'.base_url().'theme/sos/images/icons/dark/close.png" alt="print"><span style="min-width:55px;">Delete</span></a>';
 						?></td>
 
                     </tr>
@@ -157,6 +160,25 @@ function DisableEnable(id)
     </div>
 </div>
 </div>
+<script src="<?php echo base_url(); ?>theme/sos/messi/messi.js"></script>
+<script type="text/javascript">		
+		function close_btn1(id)
+		{
+			var msg = 'This will permanently delete this record. Are you sure?';
+			new Messi(msg, {title: 'Alert', buttons: [{id: 0, label: 'Yes', val: 'Y'}, {id: 1, label: 'No', val: 'N'}], callback: function(val) {
+			if(val == 'N')
+			{
+				return false;
+			}
+			else
+			{
+				var link = document.getElementById('link_del_'+id).value;
+				window.location = link;
+			}
+			}});
+			return false;
+		}
+</script>		
 <script src="<?php echo base_url(); ?>theme/sos/upload_script/js/script.js"></script>
 </body>
 </html>

@@ -118,6 +118,7 @@ class Patientlabels_Model extends Isp_Model
 			foreach($result as $res)
 			{
 				$sales_order_id = $res['sales_order_id'];
+				$sales_order_id_array[]=$sales_order_id;
 				$isExist = $this->isSalesorderExist($sales_order_id);
 				if($isExist==true)
 				{
@@ -133,8 +134,16 @@ class Patientlabels_Model extends Isp_Model
 					$this->db->insert('sales_order_wipinfo', $res);
 					$this->insertLabelsOfSalesOrder($res['labels_required'],$this->db->insert_id());
 					$i++;
-				}
+				}				
+				
 			}
+			
+			//update shipped value if sales order exist in database but no longer in "Ready For Shipping" state
+			$data=array('shipped'=>1);			
+			$st="sales_order_id NOT IN (".implode(",",$sales_order_id_array).")";
+			$this->db->where($st, NULL, FALSE);  
+			$this->db->update('sales_order_wipinfo',$data);			
+			
 			$return['inserted']=$i;
 			$return['updated']=$u;
 			return $return;

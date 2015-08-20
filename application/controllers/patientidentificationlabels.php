@@ -40,6 +40,8 @@ class Patientidentificationlabels extends Isp_Controller {
 		$data['salesorders'] = $this->Patientlabels_Model->getSalesOrders();
 		if($msg=='salesorders_updated') {
 			$data['msg']='New Sales Orders Inserted: '.$salesorders_inserted.'<br> Sales Orders updated: '.$salesorders_updated;
+		}else if ($msg=='salesorder_deleted') {
+			$data['msg']='Sales Order deleted successfully ';
 		}
 		$this->load->view('patientidentificationlabels/salesorders',$data);	
 	}
@@ -48,15 +50,19 @@ class Patientidentificationlabels extends Isp_Controller {
 	{	
 		$data['labels'] = $this->Patientlabels_Model->getLabels($salesorder_id);		
 		$get_sales_orders = $this->Patientlabels_Model->__select_table(array('ID' => $salesorder_id),'sales_order_wipinfo');
-		$sales_orders = $get_sales_orders->result_array();		
-		$data['sales_order_brightree_id'] = $sales_orders[0]['sales_order_id'];
-		$data['sales_order_table_id'] = $salesorder_id;
-		
+		$sales_orders = $get_sales_orders->result_array();
+		if(count($sales_orders) > 0) {
+			$data['sales_order_brightree_id'] = $sales_orders[0]['sales_order_id'];
+			$data['sales_order_table_id'] = $salesorder_id;
+		}else {
+			$data['sales_order_brightree_id'] ='';
+			$data['sales_order_table_id'] ='';
+		}
 		if($msg=='newlabel_added') {
 			$data['msg']=$labeladded.' new label added to the sales order';
 		}else if($msg=='label_deleted') {
 			$data['msg']='Label deleted successfully';
-		}
+		}		
 		$this->load->view('patientidentificationlabels/labels',$data);	
 	}
 
@@ -85,11 +91,35 @@ class Patientidentificationlabels extends Isp_Controller {
             echo "You have no permission to access this page.";	
 	}
 	
+        function delete_salesorder($salesorder_id=0)  {
+		if ($this->session->userdata('user_level') == '1') {		 
+			
+			//delete all labels of the sales order
+			$this->delete_all_labels($salesorder_id);
+			
+			//delete sales order
+			$table_name = 'sales_order_wipinfo';
+			$form_data['ID'] = $salesorder_id;
+            $this->{$this->model_name}->__delete_table($form_data,$table_name);
+			
+			$msg = 'salesorder_deleted';								
+			redirect(site_url('patientidentificationlabels/index/'.$msg));			
+		}else
+            echo "You have no permission to access this page.";	
+	}
+
+        function delete_all_labels($salesorder_id=0)  {
+			//delete affected patients first
+			$table_name = 'sales_order_labels';
+			$form_data['salesordertable_id'] = $salesorder_id;
+            $this->{$this->model_name}->__delete_table($form_data,$table_name);		
+			return;
+	}
+
     public function fetch_sales_order_ready_for_shipping($id = '', $msg = '', $redirect = 'true') {
 		//load library
-		$this->load->library('Salesorders_With_Custom_Fields');
-		$AllRecords = array('inserted' => 0, 'updated' => 0);
-		$newRecords = array();
+		$this->load->library('Salesorders_With_Custom_Fields');		
+		$AllResults = array();
 		
 		foreach(unserialize($this->WIPUserTaskReasonSerializeArray) as $WIPUserTaskReason) {		
 			$result = $this->salesorders_with_custom_fields->fetch_sales_order_ready_for_shipping(array(
@@ -98,14 +128,12 @@ class Patientidentificationlabels extends Isp_Controller {
 				'records_per_page' => 1000,
 				'page' => 1,
 				'WIPUserTaskReason'=>$WIPUserTaskReason
-			));				
-							
-			$newRecords= $this->Patientlabels_Model->updateSalesOrders($result);
-			$AllRecords['inserted'] += $newRecords['inserted'];
-			$AllRecords['updated'] += $newRecords['updated'];
+			));	
+			$AllResults = array_merge($AllResults,$result);
 		}
 		
+		$records= $this->Patientlabels_Model->updateSalesOrders($AllResults);
 		$msg='salesorders_updated';
-		redirect(site_url('patientidentificationlabels/index/' . $msg.'/'.$AllRecords['inserted'].'/'.$AllRecords['updated']));
+		redirect(site_url('patientidentificationlabels/index/' . $msg.'/'.$records['inserted'].'/'.$records['updated']));
     }
 }
