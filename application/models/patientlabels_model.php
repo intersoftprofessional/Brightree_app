@@ -154,9 +154,9 @@ class Patientlabels_Model extends Isp_Model
 	{
 		if($row) {
 				for($i=1;$i<=$row;$i++) {
-					$barcode =  mt_rand(1000000000, 9999999999);
+					$barcode =  mt_rand(100000, 999999);
 					while($this->isLabelExist($barcode)) {
-						$barcode = mt_rand(1000000000, 9999999999);
+						$barcode = mt_rand(100000, 999999);
 					}
 					$res['barcode'] = $barcode;
 					$res['salesordertable_id'] = $salesorder_id;

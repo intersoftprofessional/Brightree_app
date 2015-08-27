@@ -69,6 +69,7 @@ function DisableEnable(id)
 </script>
 <script src="<?php echo base_url(); ?>theme/sos/ckeditor/ckeditor.js"></script>
 <link rel="stylesheet" href="<?php echo base_url(); ?>theme/sos/ckeditor/samples/sample.css">
+<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,600' rel='stylesheet' type='text/css'>
 </head>
 
 <body onload="charcount();">
@@ -114,7 +115,7 @@ function DisableEnable(id)
                 <thead>
                     <tr>
                         <!--<th width="15%">Retailer member number</th>-->
-                        <th width="2%">Sr. No.</th>	
+                        <th width="4%">Sr.</th>	
 						<th width="10%">Sales Order ID</th>
 						<th width="10%">Patient Name</th>
 						<th width="10%">WIP Assigned To Person</th>
@@ -122,7 +123,7 @@ function DisableEnable(id)
 						<th width="10%">WIP Need Date</th>
 						<th width="10%">Facility</th>
 						<th width="10%">WIP Status</th>
-						<th width="10%">Shipped</th>
+						<th width="8%">Shipped</th>
 						<th width="10%">Operations</th>
                     </tr>
                 </thead>
@@ -140,12 +141,53 @@ function DisableEnable(id)
 						<td><?php echo $val->WIPStateName; ?></td>
 						<td><?php echo ($val->shipped == 1) ? 'Shipped' : '' ; ?></td>
                         <td><input type="hidden" value="<?php echo site_url("patientidentificationlabels/delete_salesorder/$val->ID"); ?>" id="link_del_<?php echo $li; ?>"/><?php 
-						echo '<a class="btnIconLeft" href="#"><img class="icon" src="'.base_url().'theme/sos/images/printer.png" alt="print"><span style="min-width:55px">Print</span></a>';
+						echo '<a class="btnIconLeft" href="javascript:void(0);" onclick="return printLabels('.$li.');"><img class="icon" src="'.base_url().'theme/sos/images/printer.png" alt="print"><span style="min-width:55px">Print</span></a>';
 						echo '<a class="btnIconLeft" href="'.site_url("patientidentificationlabels/labels/$val->ID").'"><img class="icon" src="'.base_url().'theme/sos/images/icon_boards.gif" alt="print"><span style="min-width:55px;">FullFill</span></a>';
 						echo '<a class="btnIconLeft" href="javascript:void(0);" onclick="return close_btn1('.$li.');"><img class="icon" src="'.base_url().'theme/sos/images/icons/dark/close.png" alt="print"><span style="min-width:55px;">Delete</span></a>';
 						?></td>
 
                     </tr>
+					<!-- Start Add Labels To Be Print On Click On Print Buttom -->
+					<?php if(count($val->labels) > 0) { ?>
+						<div style="display:none;" id="labels-<?php echo $li;?>">						
+							<?php 
+							foreach($val->labels as $label) { ?>								
+									<div class="cont">
+										<div class="label clearfix">
+											<div class="clearfix">
+												<div class="left-cont">
+													<div class="part-1 clearfix">
+														<div class="ship-label" style="">Facility :</div>
+														<div class="code"><?php echo strtolower($val->facility); ?></div>
+													</div>
+													<div class="part-1 clearfix">
+														<div class="ship-label">Patient name :</div>
+														<div class="code"><?php echo strtolower($val->patient_name); ?></div>
+													</div>
+													<div class="part-1 clearfix">
+														<div class="ship-label">Room #</div>
+														<div class="code">&nbsp;</div>
+													</div>
+													<div class="part-1 clearfix">
+														<div class="ship-label">Sales order#</div>
+														<div class="code"><?php echo $val->sales_order_id; ?></div>
+													</div>
+												</div>
+												<div class="right-cont">												
+													<img src="<?php echo site_url('patientidentificationlabels/generate_barcode_image/'.$label->barcode); ?>" alt="" />
+													<div style="text-align:center; font-size:12px;line-height: 5px;letter-spacing:3px"><?php echo $label->barcode; ?></div>
+													<div class="ship-label" style="font-size:13px; margin:5px 0;letter-spacing:.5px;font-weight:600;"><?php echo $label->ID; ?></div>
+												</div>
+											</div>
+										</div>
+									</div>
+								<?php if(end($val->labels) !== $label) {?>
+									<div class="page-break"></div>
+								<?php } ?>
+							<?php } ?>
+						</div>
+					<?php } ?>	
+					<!-- End Add Labels To Be Print On Click On Print Buttom -->
                 <?php $li++; } ?>
                 </tbody>
             </table>
@@ -154,7 +196,7 @@ function DisableEnable(id)
 
 </div>
 <!-- Footer -->
-<div id="footer">
+<div id="footer">	
 	<div class="wrapper">
 
     </div>
@@ -177,6 +219,45 @@ function DisableEnable(id)
 			}
 			}});
 			return false;
+		}
+		function printLabels(labelcount){
+			if(document.getElementById('frame1')) {
+				document.body.removeChild(document.getElementById('frame1'));
+			}
+			
+			var frame1 = document.createElement('iframe');
+			frame1.id = "frame1";
+			frame1.name = "frame1";
+			frame1.style.position = "absolute";
+			frame1.style.top = "-1000000px";
+			//frame1.style.display = "none";
+			document.body.appendChild(frame1);
+			var frameDoc = frame1.contentWindow ? frame1.contentWindow : frame1.contentDocument.document ? frame1.contentDocument.document : frame1.contentDocument;
+			
+			var link = frameDoc.document.createElement('link');
+			link.type = 'text/css';
+			link.rel = 'stylesheet';
+			link.href = '<?php echo base_url('theme/sos/css/printstyle.css'); ?>';
+			
+			var link1 = frameDoc.document.createElement('link');
+			link1.type = 'text/css';
+			link1.rel = 'stylesheet';
+			link1.href = 'https://fonts.googleapis.com/css?family=Open+Sans:400,600';
+			
+			
+			
+			frameDoc.document.open();    
+			//Add Content To Print
+			frameDoc.document.write(document.getElementById("labels-"+labelcount).innerHTML);			
+			frameDoc.document.body.appendChild(link);			
+			frameDoc.document.body.appendChild(link1);			
+			frameDoc.document.close();
+			
+			//setTimeout(function() {
+			window.frames["frame1"].focus();
+			window.frames["frame1"].print();
+				//document.body.removeChild(frame1);
+			//}, 500);
 		}
 </script>		
 <script src="<?php echo base_url(); ?>theme/sos/upload_script/js/script.js"></script>

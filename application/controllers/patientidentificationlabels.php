@@ -38,6 +38,13 @@ class Patientidentificationlabels extends Isp_Controller {
 	function index($msg='',$salesorders_inserted=0,$salesorders_updated=0 )
 	{	
 		$data['salesorders'] = $this->Patientlabels_Model->getSalesOrders();
+		
+		if(count($data['salesorders']) > 0) {
+			foreach($data['salesorders'] as &$salesorder) {
+				$salesorder->labels = $this->Patientlabels_Model->getLabels($salesorder->ID);
+			}		
+		}
+		
 		if($msg=='salesorders_updated') {
 			$data['msg']='New Sales Orders Inserted: '.$salesorders_inserted.'<br> Sales Orders updated: '.$salesorders_updated;
 		}else if ($msg=='salesorder_deleted') {
@@ -91,7 +98,7 @@ class Patientidentificationlabels extends Isp_Controller {
             echo "You have no permission to access this page.";	
 	}
 	
-        function delete_salesorder($salesorder_id=0)  {
+	public function delete_salesorder($salesorder_id=0)  {
 		if ($this->session->userdata('user_level') == '1') {		 
 			
 			//delete all labels of the sales order
@@ -100,22 +107,31 @@ class Patientidentificationlabels extends Isp_Controller {
 			//delete sales order
 			$table_name = 'sales_order_wipinfo';
 			$form_data['ID'] = $salesorder_id;
-            $this->{$this->model_name}->__delete_table($form_data,$table_name);
+			$this->{$this->model_name}->__delete_table($form_data,$table_name);
 			
 			$msg = 'salesorder_deleted';								
 			redirect(site_url('patientidentificationlabels/index/'.$msg));			
 		}else
-            echo "You have no permission to access this page.";	
+			echo "You have no permission to access this page.";	
 	}
 
-        function delete_all_labels($salesorder_id=0)  {
-			//delete affected patients first
-			$table_name = 'sales_order_labels';
-			$form_data['salesordertable_id'] = $salesorder_id;
-            $this->{$this->model_name}->__delete_table($form_data,$table_name);		
-			return;
+	public function delete_all_labels($salesorder_id=0)  {
+		//delete affected patients first
+		$table_name = 'sales_order_labels';
+		$form_data['salesordertable_id'] = $salesorder_id;
+		$this->{$this->model_name}->__delete_table($form_data,$table_name);		
+		return;
 	}
-
+	
+	public function generate_barcode_image($text="",$size="20",$orientation="horizontal"){
+		$this->load->library('Barcode');
+		$this->barcode->generate_barcode(array(
+			'text' => $text,
+			'size'=>$size,
+			'orientation'=>$orientation
+		));
+	}
+	
     public function fetch_sales_order_ready_for_shipping($id = '', $msg = '', $redirect = 'true') {
 		//load library
 		$this->load->library('Salesorders_With_Custom_Fields');		

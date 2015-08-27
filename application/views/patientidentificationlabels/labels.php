@@ -117,6 +117,7 @@ function DisableEnable(id)
                         <th width="20%">Sr. No.</th>							
 						<th width="20%">Sales Order</th>
 						<th width="20%">Barcode</th>
+						<th width="20%">Barcode Image</th>
 						<th width="20%">Operation</th>
 						<th width="20%"></th>
                     </tr>
@@ -128,6 +129,7 @@ function DisableEnable(id)
                         <td class="center"><?php echo $li; ?></td>
                         <td class="center"><?php echo $sales_order_brightree_id; ?></td>
 						<td class="center"><?php echo $val->barcode; ?></td>
+						<td class="center" style="font-weight: bold;color:#000;"><img src="<?php echo site_url('patientidentificationlabels/generate_barcode_image/'.$val->barcode); ?>" alt="barcode" /><br><?php echo $val->barcode; ?></td>
 						<td class="center">
 							<div class="num">
 								<input type="hidden" value="<?php echo site_url('patientidentificationlabels/delete_label/'.$val->ID.'/'.$sales_order_table_id); ?>" id="link_del_<?php echo $li; ?>"/>
