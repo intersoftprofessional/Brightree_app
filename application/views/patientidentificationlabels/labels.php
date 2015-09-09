@@ -136,6 +136,9 @@ function DisableEnable(id)
 								<a href="javascript:void(0);" title="Delete" onclick="return close_btn1(<?php echo $li; ?>);" class="greenNum">
 									<img alt="" src="<?php echo base_url(); ?>theme/sos/images/icons/dark/close.png" />
 								</a>
+								<a class="greenNum" title="Scan" onclick="scanBarcode('<?php echo site_url('patientidentificationlabels/generate_barcode_image/'.$val->barcode).'/100'; ?>',<?php echo $val->barcode;?>);">
+									<img alt="scan" src="<?php echo base_url(); ?>theme/sos/images/icons/dark/scanLabel.png" />
+								</a>
 							</div>
 						</td>
 						<td></td>
@@ -170,6 +173,13 @@ function DisableEnable(id)
 				window.location = link;
 			}
 			}});
+			return false;
+		}
+		
+		function scanBarcode(img,barcode)
+		{
+			var msg = '<img src="'+img+'" style="width:100%" alt="barcode" /><p style="text-align:center;font-size:20px;color:#000;font-weight:bold;">'+barcode+'</p>';
+			new Messi(msg, {title: 'Scan Barcode', buttons: [], width: '250px', height: '235px'});
 			return false;
 		}
 		
